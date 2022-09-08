@@ -1,0 +1,17 @@
+{
+    "data": {
+        "magic": "APF_VER_1",
+        "data_slots": [
+            {
+                "name": "ROM",
+                "id": 101,
+                "required": true,
+                "parameters": 2,
+                "filename": "asteroid.rom",
+                "size_exact": 0,
+                "size_maximum": 131072,
+                "address": "0x00000000"
+            }
+        ]
+    }
+}
