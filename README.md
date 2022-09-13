@@ -8,7 +8,6 @@
 ## Known Issues
 
 + DIP switches are not implemented.
-+ Might not compile / fit correctly due to timing?
 
 ## ROM Instructions
 
