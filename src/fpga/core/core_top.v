@@ -493,7 +493,7 @@ mf_pllbase mp1 (
   //
   // synchronize audio samples coming from the core
   wire	[31:0]	audgen_sampdata_s;
-  synch_3 #(.WIDTH(32)) s5(({1'b0, audio, 1'b0, audio}), audgen_sampdata_s, audgen_sclk);
+  synch_3 #(.WIDTH(32)) s5(({1'b0, audio[7:1], 1'b0, audio[7:1]}), audgen_sampdata_s, audgen_sclk);
   reg		[31:0]	audgen_sampshift;
   reg		[4:0]	audgen_lrck_cnt;
   reg				audgen_lrck;
@@ -601,7 +601,7 @@ synch_2 #(
 ) cont1_s (
   cont1_key,
   cont1_key_s,
-  clk_25
+  clk_6
 );
 
 synch_2 #(
@@ -609,7 +609,7 @@ synch_2 #(
 ) cont2_s (
   cont2_key,
   cont2_key_s,
-  clk_25
+  clk_6
 );
 
 wire [7:0] BUTTON = {
@@ -632,9 +632,9 @@ reg [3:0] g2;
 reg [3:0] b2;
 
 always @(posedge clk_50) begin
-    r2 <= r;
+   r2 <= r;
 	g2 <= g;
-    b2 <= b;
+   b2 <= b;
 end
 
 wire [7:0] audio;
