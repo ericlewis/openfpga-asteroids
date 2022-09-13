@@ -57,7 +57,7 @@ module data_loader_8 #(
 );
 
   reg start_memory_write;
-  reg [1:0] start_memory_write_count;
+  reg [2:0] start_memory_write_count;
   reg [ADDRESS_SIZE:0] buffered_addr;
   reg [31:0] buffered_data;
 
@@ -71,7 +71,7 @@ module data_loader_8 #(
       clk_memory
   );
 
-  synch_3 #(
+  synch_2 #(
       .WIDTH(ADDRESS_SIZE + 1)
   ) addr_s (
       buffered_addr,
@@ -79,7 +79,7 @@ module data_loader_8 #(
       clk_memory
   );
 
-  synch_3 #(
+  synch_2 #(
       .WIDTH(32)
   ) data_s (
       buffered_data,
@@ -94,7 +94,7 @@ module data_loader_8 #(
     end else if (bridge_wr && bridge_addr[31:28] == ADDRESS_MASK_UPPER_4) begin
       // Set up buffered writes
       start_memory_write <= 1;
-      start_memory_write_count <= 3;
+      start_memory_write_count <= 5;
 
       buffered_addr <= bridge_addr[ADDRESS_SIZE:0];
 
