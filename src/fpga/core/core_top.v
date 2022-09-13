@@ -593,36 +593,34 @@ data_loader_8 #(
     .write_data(ioctl_dout)
 );
 
-// NOTE: this stuff might be really senstive to change... there are timing issues.
-reg cont_key_0_reg = 1;
-reg cont_key_1_reg = 1;
-reg cont_key_2_reg = 1;
-reg cont_key_3_reg = 1;
-reg cont_key_4_reg = 1;
-reg cont_key_5_reg = 1;
-reg cont_key_6_reg = 1;
-reg cont_key_7_reg = 1;
+wire [15:0] cont1_key_s;
+wire [15:0] cont2_key_s;
 
-always @(posedge clk_74a) begin
-    cont_key_0_reg <= ~(cont1_key[3] | cont2_key[3]);
-    cont_key_1_reg <= ~(cont1_key[2] | cont2_key[2]);
-    cont_key_2_reg <= ~cont1_key[15];
-    cont_key_3_reg <= ~cont2_key[15];
-    cont_key_4_reg <= ~(cont1_key[4] | cont2_key[4]);
-    cont_key_5_reg <= ~(cont1_key[7] | cont2_key[7]);
-    cont_key_6_reg <= ~(cont1_key[6] | cont2_key[6]);
-    cont_key_7_reg <= ~(cont1_key[5] | cont2_key[5]);
-end
+synch_2 #(
+  .WIDTH(16)
+) cont1_s (
+  cont1_key,
+  cont1_key_s,
+  clk_25
+);
+
+synch_2 #(
+  .WIDTH(16)
+) cont2_s (
+  cont2_key,
+  cont2_key_s,
+  clk_25
+);
 
 wire [7:0] BUTTON = {
-    cont_key_0_reg,  // right
-    cont_key_1_reg,  // left
-    cont_key_2_reg,  // P1 Start
-    cont_key_3_reg,  // P2 Start
-    cont_key_4_reg,  // fire
-    cont_key_5_reg,  // ???
-    cont_key_6_reg,  // thrust
-    cont_key_7_reg   // hyperspace
+    ~(cont1_key_s[3] | cont2_key_s[3]),  // right
+    ~(cont1_key_s[2] | cont2_key_s[2]),  // left
+    ~cont1_key_s[15],                    // P1 Start
+    ~cont2_key_s[15],                    // P2 Start
+    ~(cont1_key_s[4] | cont2_key_s[4]),  // fire
+    ~(cont1_key_s[7] | cont2_key_s[7]),  // ???
+    ~(cont1_key_s[6] | cont2_key_s[6]),  // thrust
+    ~(cont1_key_s[5] | cont2_key_s[5])   // hyperspace
 };
 
 wire hblank, vblank_asteroids;
