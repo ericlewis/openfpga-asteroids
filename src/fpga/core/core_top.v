@@ -493,7 +493,7 @@ mf_pllbase mp1 (
   //
   // synchronize audio samples coming from the core
   wire	[31:0]	audgen_sampdata_s;
-  synch_3 #(.WIDTH(32)) s5(({audio, audio}), audgen_sampdata_s, audgen_sclk);
+  synch_3 #(.WIDTH(32)) s5(({1'b0, audio, 1'b0, audio}), audgen_sampdata_s, audgen_sclk);
   reg		[31:0]	audgen_sampshift;
   reg		[4:0]	audgen_lrck_cnt;
   reg				audgen_lrck;
