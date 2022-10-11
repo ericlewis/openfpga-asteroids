@@ -1,7 +1,67 @@
 {
     "interact": {
         "magic": "APF_VER_1",
-        "variables": [],
+        "variables": [
+            {
+                "name": "Language",
+                "id": 1,
+                "type": "list",
+                "enabled": true,
+                "persist": true,
+                "address": "0x80000000",
+                "writeonly": true,
+                "defaultval": 0,
+                "options": [
+                  {
+                    "value": 0,
+                    "name": "English"
+                  },
+                  {
+                    "value": 1,
+                    "name": "German"
+                  },
+                  {
+                    "value": 2,
+                    "name": "French"
+                  },
+                  {
+                    "value": 3,
+                    "name": "Spanish"
+                  }
+                ]
+            },
+            {
+                "name": "Ships",
+                "id": 2,
+                "type": "list",
+                "enabled": true,
+                "persist": true,
+                "address": "0x90000000",
+                "writeonly": true,
+                "defaultval": 0,
+                "options": [
+                  {
+                    "value": 0,
+                    "name": "3"
+                  },
+                  {
+                    "value": 1,
+                    "name": "4"
+                  }
+                ]
+            },
+            {
+                "name": "Self-Test",
+                "id": 3,
+                "type": "check",
+                "enabled": true,
+                "persist": true,
+                "address": "0x10000000",
+                "writeonly": true,
+                "defaultval": 0,
+                "value": 1
+            }
+        ],
         "messages": []
     }
 }

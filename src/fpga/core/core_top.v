@@ -209,10 +209,10 @@ input   wire    [31:0]  bridge_wr_data,
 //   [ 7: 0] ltrig
 //   [15: 8] rtrig
 //
-input   wire    [15:0]  cont1_key,
-input   wire    [15:0]  cont2_key,
-input   wire    [15:0]  cont3_key,
-input   wire    [15:0]  cont4_key,
+input   wire    [31:0]  cont1_key,
+input   wire    [31:0]  cont2_key,
+input   wire    [31:0]  cont3_key,
+input   wire    [31:0]  cont4_key,
 input   wire    [31:0]  cont1_joy,
 input   wire    [31:0]  cont2_joy,
 input   wire    [31:0]  cont3_joy,
@@ -438,9 +438,13 @@ core_bridge_cmd icb (
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-    wire clk_6, clk_25_175_90deg, clk_25, clk_50, clk_25_175;
+wire clk_6;
+wire clk_25;
+wire clk_25_175;
+wire clk_25_175_90deg;
+wire clk_50;
 
-    wire    pll_core_locked;
+wire    pll_core_locked;
     
 mf_pllbase mp1 (
     .refclk         ( clk_74a ),
@@ -456,114 +460,84 @@ mf_pllbase mp1 (
 );
 
 ///////////////////////////////////////////////
+// Core Settings
+///////////////////////////////////////////////
+
+reg [1:0] cs_language   = 0;
+reg [1:0] cs_ship_count = 0;
+reg [1:0] cs_test_mode  = 0;
+
+always @(posedge clk_74a) begin
+  if(bridge_wr) begin
+    casex(bridge_addr)
+      32'h80000000: cs_language   <= bridge_wr_data[1:0];
+      32'h90000000: cs_ship_count <= bridge_wr_data[0];
+      32'h10000000: cs_test_mode  <= bridge_wr_data[0];
+    endcase
+  end
+end
+
+///////////////////////////////////////////////
 // Core Audio
 ///////////////////////////////////////////////
 
+wire [7:0] audio;
 
-  assign audio_mclk = audgen_mclk;
-  assign audio_dac = audgen_dac;
-  assign audio_lrck = audgen_lrck;
+sound_i2s #(
+    .CHANNEL_WIDTH(8),
+    .SIGNED_INPUT (0)
+) sound_i2s (
+    .clk_74a(clk_74a),
+    .clk_audio(clk_6),
+    
+    .audio_l(audio),
+    .audio_r(audio),
 
-  reg				audgen_nextsamp;
-
-  // generate MCLK = 12.288mhz with fractional accumulator
-  reg         [21:0]  audgen_accum;
-  reg                 audgen_mclk;
-  parameter   [20:0]  CYCLE_48KHZ = 21'd122880 * 2;
-  always @(posedge clk_74a)
-  begin
-    audgen_accum <= audgen_accum + CYCLE_48KHZ;
-    if(audgen_accum >= 21'd742500)
-    begin
-      audgen_mclk <= ~audgen_mclk;
-      audgen_accum <= audgen_accum - 21'd742500 + CYCLE_48KHZ;
-    end
-  end
-
-  // generate SCLK = 3.072mhz by dividing MCLK by 4
-  reg [1:0]   aud_mclk_divider;
-  wire        audgen_sclk = aud_mclk_divider[1] /* synthesis keep*/;
-  always @(posedge audgen_mclk)
-  begin
-    aud_mclk_divider <= aud_mclk_divider + 1'b1;
-  end
-
-  // shift out audio data as I2S
-  // 32 total bits per channel, but only 16 active bits at the start and then 16 dummy bits
-  //
-  // synchronize audio samples coming from the core
-  wire	[31:0]	audgen_sampdata_s;
-  synch_3 #(.WIDTH(32)) s5(({1'b0, audio[7:1], 1'b0, audio[7:1]}), audgen_sampdata_s, audgen_sclk);
-  reg		[31:0]	audgen_sampshift;
-  reg		[4:0]	audgen_lrck_cnt;
-  reg				audgen_lrck;
-  reg				audgen_dac;
-  always @(negedge audgen_sclk)
-  begin
-    // output the next bit
-    audgen_dac <= audgen_sampshift[31];
-
-    // 48khz * 64
-    audgen_lrck_cnt <= audgen_lrck_cnt + 1'b1;
-    if(audgen_lrck_cnt == 31)
-    begin
-      // switch channels
-      audgen_lrck <= ~audgen_lrck;
-
-      // Reload sample shifter
-      if(~audgen_lrck)
-      begin
-        audgen_sampshift <= audgen_sampdata_s;
-      end
-    end
-    else if(audgen_lrck_cnt < 16)
-    begin
-      // only shift for 16 clocks per channel
-      audgen_sampshift <= {audgen_sampshift[30:0], 1'b0};
-    end
-  end
+    .audio_mclk(audio_mclk),
+    .audio_lrck(audio_lrck),
+    .audio_dac(audio_dac)
+);
 
 ///////////////////////////////////////////////
 // Core Video
 ///////////////////////////////////////////////
 
-  assign video_rgb_clock = clk_25_175;
-  assign video_rgb_clock_90 = clk_25_175_90deg;
+assign video_rgb_clock = clk_25_175;
+assign video_rgb_clock_90 = clk_25_175_90deg;
 
-  reg video_de_reg;
-  reg video_hs_reg;
-  reg video_vs_reg;
-  reg [23:0] video_rgb_reg;
-  reg video_skip_reg;
+reg video_de_reg;
+reg video_hs_reg;
+reg video_vs_reg;
+reg [23:0] video_rgb_reg;
+reg video_skip_reg;
 
-  assign video_de = video_de_reg;
-  assign video_hs = video_hs_reg;
-  assign video_vs = video_vs_reg;
-  assign video_rgb = video_rgb_reg;
-  assign video_skip = video_skip_reg;
+assign video_de = video_de_reg;
+assign video_hs = video_hs_reg;
+assign video_vs = video_vs_reg;
+assign video_rgb = video_rgb_reg;
+assign video_skip = video_skip_reg;
 
-  reg hs_prev;
-  reg vs_prev;
-  reg de_prev;
+reg hs_prev;
+reg vs_prev;
+reg de_prev;
 
-  always @(posedge clk_25_175)
-  begin
-    video_de_reg <= 0;
-    video_rgb_reg <= 24'h0;
+always @(posedge clk_25_175) begin
+  video_de_reg <= 0;
+  video_rgb_reg <= 24'h0;
 
-    if (~(vblank_asteroids || hblank)) begin
-      video_de_reg <= 1;
+  if (~(vblank_asteroids || hblank)) begin
+    video_de_reg <= 1;
 
-      video_rgb_reg[23:16] <= {2{r2}};
-      video_rgb_reg[15:8]  <= {2{g2}};
-      video_rgb_reg[7:0]   <= {2{b2}};
-    end
-
-    video_hs_reg <= ~hs_prev && hs;
-    video_vs_reg <= ~vs_prev && vs;
-    hs_prev <= hs;
-    vs_prev <= vs;
+    video_rgb_reg[23:16] <= {2{r2}};
+    video_rgb_reg[15:8]  <= {2{g2}};
+    video_rgb_reg[7:0]   <= {2{b2}};
   end
+
+  video_hs_reg <= ~hs_prev && hs;
+  video_vs_reg <= ~vs_prev && vs;
+  hs_prev <= hs;
+  vs_prev <= vs;
+end
 
 ///////////////////////////////////////////////
 // Core Instance
@@ -573,15 +547,12 @@ wire        ioctl_wr;
 wire [24:0] ioctl_addr;
 wire  [7:0] ioctl_dout;
 
-data_loader_8 #(
+data_loader #(
     .ADDRESS_MASK_UPPER_4(0), 
-    .WRITE_MEM_CLOCK_DELAY(1), 
-    .WRITE_MEM_EN_CYCLE_LENGTH(1)
+    .WRITE_MEM_CLOCK_DELAY(4)
 ) rom_loader (
     .clk_74a(clk_74a),
     .clk_memory(clk_25),
-
-    .reset_n(status_setup_done),
 
     .bridge_wr(bridge_wr),
     .bridge_endian_little(bridge_endian_little),
@@ -593,11 +564,11 @@ data_loader_8 #(
     .write_data(ioctl_dout)
 );
 
-wire [15:0] cont1_key_s;
-wire [15:0] cont2_key_s;
+wire [31:0] cont1_key_s;
+wire [31:0] cont2_key_s;
 
 synch_2 #(
-  .WIDTH(16)
+  .WIDTH(32)
 ) cont1_s (
   cont1_key,
   cont1_key_s,
@@ -605,7 +576,7 @@ synch_2 #(
 );
 
 synch_2 #(
-  .WIDTH(16)
+  .WIDTH(32)
 ) cont2_s (
   cont2_key,
   cont2_key_s,
@@ -632,40 +603,33 @@ reg [3:0] g2;
 reg [3:0] b2;
 
 always @(posedge clk_50) begin
-   r2 <= r;
+  r2 <= r;
 	g2 <= g;
-   b2 <= b;
+  b2 <= b;
 end
-
-wire [7:0] audio;
-
-wire [1:0] lang = 1'b0;
-wire ships = 1'b1;
-
-wire vgade;
 
 ASTEROIDS_TOP ASTEROIDS_TOP
 (
-	.BUTTON(BUTTON),
-	.SELF_TEST_SWITCH_L(1'b1), 
-	.LANG(lang),
-	.SHIPS(ships),
-	.AUDIO_OUT(audio),
 	.dn_addr(ioctl_addr[15:0]),
 	.dn_data(ioctl_dout),
 	.dn_wr(ioctl_wr),	
-	.VIDEO_R_OUT(r),
+	.clk_6(clk_6),
+	.clk_25(clk_25),
+
+	.BUTTON(BUTTON),
+	.SELF_TEST_SWITCH_L(~cs_test_mode), 
+	.LANG(cs_language),
+	.SHIPS(cs_ship_count),
+	.AUDIO_OUT(audio),
+  .VIDEO_R_OUT(r),
 	.VIDEO_G_OUT(g),
 	.VIDEO_B_OUT(b),
 	.HSYNC_OUT(hs),
 	.VSYNC_OUT(vs),
-	.VGA_DE(vgade),
 	.VID_HBLANK(hblank),
 	.VID_VBLANK(vblank_asteroids),
 
 	.RESET_L (reset_n),	
-	.clk_6(clk_6),
-	.clk_25(clk_25)
 );
     
 endmodule
