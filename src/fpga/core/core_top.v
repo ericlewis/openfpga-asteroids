@@ -548,7 +548,6 @@ wire [24:0] ioctl_addr;
 wire  [7:0] ioctl_dout;
 
 data_loader #(
-    .ADDRESS_MASK_UPPER_4(0), 
     .WRITE_MEM_CLOCK_DELAY(4)
 ) rom_loader (
     .clk_74a(clk_74a),
