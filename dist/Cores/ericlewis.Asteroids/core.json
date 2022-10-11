@@ -7,7 +7,7 @@
             "description": "Atari's Asteroids released in 1979.",
             "author": "ericlewis",
             "url": "https://github.com/ericlewis/openfpga-asteroids",
-            "version": "1.0.0",
+            "version": "1.0.1",
             "date_release": "2022-10-11"
         },
         "framework": {
