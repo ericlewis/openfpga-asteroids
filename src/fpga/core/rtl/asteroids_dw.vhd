@@ -82,14 +82,14 @@ architecture RTL of ASTEROIDS_DW is
   -- types & constants
   subtype  Bus12    is std_logic_vector (11 downto 0);
 
-  constant V_FRONT_PORCH_START : Bus12 := x"1e0"; -- line 480
-  constant V_SYNC_START        : Bus12 := x"1ea"; -- line 490
-  constant V_BACK_PORCH_START  : Bus12 := x"1ec"; -- line 492
+  constant V_FRONT_PORCH_START : Bus12 := x"200"; -- line 512
+  constant V_SYNC_START        : Bus12 := x"202"; -- line 514
+  constant V_BACK_PORCH_START  : Bus12 := x"204"; -- line 516
   constant LINE_PER_FRAME      : Bus12 := x"20d"; -- 525 lines
 
-  constant H_FRONT_PORCH_START : Bus12 := x"280"; -- pixel 640
-  constant H_SYNC_START        : Bus12 := x"290"; -- pixel 656
-  constant H_BACK_PORCH_START  : Bus12 := x"2f0"; -- pixel 752
+  constant H_FRONT_PORCH_START : Bus12 := x"200"; -- pixel 512
+  constant H_SYNC_START        : Bus12 := x"210"; -- pixel 528
+  constant H_BACK_PORCH_START  : Bus12 := x"270"; -- pixel 624
   constant PIXEL_PER_LINE      : Bus12 := x"320"; -- 800 pixels
 
   signal lcount               : std_logic_vector(9 downto 0);
@@ -182,11 +182,10 @@ begin
         pcount <= pcount + "1";
       end if;
 		
-		if pcount > 63 then
+		if pcount < 512 then
 			pxcount <= pxcount + "1";
 			raster_active <= '1';
-		end if;
-		if pcount > 575 then
+		else
 			raster_active <= '0';
 			pxcount <= "111111111";
 		end if;
